@@ -26,8 +26,18 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://discovery-service:8761/eureka
+
 logging:
   level:
     org.springframework.security: DEBUG
+
 jwt:
   secret: cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    tags-sorter: alpha # 알파벳 정렬

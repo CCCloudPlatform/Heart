@@ -22,21 +22,31 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
+        return http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers(
+                    "/swagger-ui/*",
+                    "/swagger-ui.html",
+                    "/swagger-resources",
+                    "/swagger-resources/*",
+                    "/v3/api-docs/*",
+                    "/v3/api-docs",
+                    "/webjars/*",
+                    "/configuration/*"
+                ).permitAll()
                 .requestMatchers("/user/register", "/user/login").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .httpBasic(AbstractHttpConfigurer::disable)
-            .formLogin(AbstractHttpConfigurer::disable);
-        return http.build();
+            .formLogin(AbstractHttpConfigurer::disable)
+            .build();
     }
 
     @Bean
