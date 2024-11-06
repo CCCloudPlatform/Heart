@@ -39,7 +39,12 @@ public class SecurityConfig {
                     "/webjars/*",
                     "/configuration/*"
                 ).permitAll()
-                .requestMatchers("/user/register", "/user/login").permitAll()
+                    .requestMatchers(
+                            "/user/login",
+                            "/user/register",
+                            "/*/user/login",
+                            "/*/user/register"
+                    ).permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .anyRequest().authenticated()
             )
