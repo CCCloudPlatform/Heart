@@ -58,4 +58,37 @@ public class UserController {
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
+
+    @GetMapping("/{userID}")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserByID(@PathVariable String userID) {
+        try {
+            UserDTO userDTO = userService.getUserByID(userID);
+            return ResponseEntity.ok(ApiResponse.success("User found", userDTO));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@RequestBody UserDTO userDTO) {
+        try {
+            UserDTO updatedUser = userService.updateUser(userDTO);
+            return ResponseEntity.ok(ApiResponse.success("User updated successfully", updatedUser));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{userID}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable String userID) {
+        try {
+            userService.deleteUser(userID);
+            return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(e.getMessage()));
+        }
+    }
 }

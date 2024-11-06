@@ -87,24 +87,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean updateUser(UserDTO userDTO) {
-        Optional<UserDAO> existingUser = userRepository.findByUserID(userDTO.getUserID());
-        if (existingUser.isPresent()) {
-            UserDAO updatedUser = updateUserDAO(existingUser.get(), userDTO);
-            userRepository.save(updatedUser);
-            return true;
-        }
-        return false;
+    public UserDTO updateUser(UserDTO userDTO) {
+        UserEntity user = userRepository.findByUserID(userDTO.getUserID())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        updateUserFields(user, userDTO);
+        userRepository.save(user);
+        return convertToDTO(user);
     }
 
     @Override
-    public boolean deleteUser(String userID) {
-        Optional<UserDAO> user = userRepository.findByUserID(userID);
-        if (user.isPresent()) {
-            userRepository.delete(user.get());
-            return true;
-        }
-        return false;
+    public void deleteUser(String userID) {
+        UserEntity user = userRepository.findByUserID(userID)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        userRepository.delete(user);
     }
 
     private UserDTO convertToDTO(UserEntity user) {
@@ -117,12 +112,19 @@ public class UserServiceImpl implements UserService {
             .build();
     }
 
-    private UserDAO updateUserDAO(UserDAO existingUser, UserDTO userDTO) {
-        existingUser.setUserName(userDTO.getUserName());
-        existingUser.setUserEmail(userDTO.getUserEmail());
-        existingUser.setUserRole(userDTO.getUserRole());
-        existingUser.setUserDetail(userDTO.getUserDetail());
-        // Note: Update password only if it's provided in the DTO
+    private void updateUserFields(UserEntity user, UserDTO userDTO) {
+        if (userDTO.getUserName() != null) {
+            user.setUserName(userDTO.getUserName());
+        }
+        if (userDTO.getUserEmail() != null) {
+            user.setUserEmail(userDTO.getUserEmail());
+        }
+        if (userDTO.getUserRole() != null) {
+            user.setUserRole(userDTO.getUserRole());
+        }
+        if (userDTO.getUserDetail() != null) {
+            user.setUserDetail(userDTO.getUserDetail());
+        }
         if (userDTO.getUserPW() != null && !userDTO.getUserPW().isEmpty()) {
             user.setEncryptedPW(passwordEncoder.encode(userDTO.getUserPW()));
         }

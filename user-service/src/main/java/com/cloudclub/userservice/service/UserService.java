@@ -9,6 +9,6 @@ public interface UserService {
     boolean logout(String token);
     String refreshToken(String token);
     UserDTO getUserByID(String userID);
-    boolean updateUser(UserDTO userDTO);
-    boolean deleteUser(String userID);
+    UserDTO updateUser(UserDTO userDTO);
+    void deleteUser(String userID);
 }
