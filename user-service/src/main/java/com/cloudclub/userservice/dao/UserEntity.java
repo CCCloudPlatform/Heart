@@ -1,6 +1,6 @@
 package com.cloudclub.userservice.dao;
 
-import lombok.Data;
+import lombok.*;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import jakarta.persistence.Id;
@@ -8,10 +8,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 
-@Data
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @Entity
 @Table(name = "users")
-public class UserDAO {
+public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "uuid", columnDefinition = "VARCHAR(36)")
@@ -21,7 +24,7 @@ public class UserDAO {
     private String userRole;
     private String userEmail;
     private String userName;
-    private String userPriority;
-    private boolean approve;
     private String encryptedPW;
+
+    public UserEntity() {}
 }

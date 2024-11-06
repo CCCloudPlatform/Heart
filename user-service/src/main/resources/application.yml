@@ -5,9 +5,10 @@ spring:
   application:
     name: user-service
   datasource:
-    url: jdbc:mysql://mysql-container:3306/ccclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/cloudclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    # url: jdbc:mysql://mysql-container:3306/cloudclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
-    password: rlaxogjs8312
+    password: cloudclub
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -25,3 +26,8 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://discovery-service:8761/eureka
+logging:
+  level:
+    org.springframework.security: DEBUG
+jwt:
+  secret: cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123

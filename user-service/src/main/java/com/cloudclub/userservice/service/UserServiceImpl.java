@@ -1,84 +1,89 @@
 package com.cloudclub.userservice.service;
 
 import com.cloudclub.userservice.dto.UserDTO;
-import com.cloudclub.userservice.dao.UserDAO;
+import com.cloudclub.userservice.dao.UserEntity;
 import com.cloudclub.userservice.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.cloudclub.userservice.security.JwtUtil;
+import com.cloudclub.userservice.dto.AuthResponseData;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
-import java.util.UUID;
-import java.util.Map;
-import java.util.HashMap;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class UserServiceImpl implements UserService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    // 간단한 토큰 저장소 (실제로는 Redis 등을 사용하는 것이 좋습니다)
-    private Map<String, String> tokenStore = new HashMap<>();
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     @Override
-    public String login(UserDTO userDTO) {
-        Optional<UserDAO> user = userRepository.findByUserID(userDTO.getUserID());
-        if (user.isPresent() && passwordEncoder.matches(userDTO.getUserPW(), user.get().getEncryptedPW())) {
-            String token = generateToken();
-            tokenStore.put(token, userDTO.getUserID());
-            return token;
+    public AuthResponseData login(UserDTO userDTO) {
+        UserEntity user = userRepository.findByUserID(userDTO.getUserID())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+            
+        if (passwordEncoder.matches(userDTO.getUserPW(), user.getEncryptedPW())) {
+            String token = jwtUtil.createToken(user.getUserID(), user.getUserRole());
+            return AuthResponseData.builder()
+                .accessToken(token)
+                .user(convertToDTO(user))
+                .build();
         }
-        return null;
+        throw new RuntimeException("Invalid password");
+    }
+
+    @Override
+    public AuthResponseData register(UserDTO userDTO) {
+        if (userRepository.findByUserID(userDTO.getUserID()).isPresent()) {
+            throw new RuntimeException("UserID already exists");
+        }
+
+        UserEntity user = UserEntity.builder()
+                .userID(userDTO.getUserID())
+                .encryptedPW(passwordEncoder.encode(userDTO.getUserPW()))
+                .userName(userDTO.getUserName())
+                .userEmail(userDTO.getUserEmail())
+                .userRole(userDTO.getUserRole())
+                .userDetail(userDTO.getUserDetail())
+                .build();
+            
+        userRepository.save(user);
+        
+        String token = jwtUtil.createToken(user.getUserID(), user.getUserRole());
+        return AuthResponseData.builder()
+            .accessToken(token)
+            .user(convertToDTO(user))
+            .build();
     }
 
     @Override
     public boolean logout(String token) {
-        return tokenStore.remove(token) != null;
-    }
-
-    @Override
-    public boolean register(UserDTO userDTO) {
-        if (userRepository.findByUserID(userDTO.getUserID()).isPresent()) {
-            return false; // 이미 존재하는 사용자
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+            return jwtUtil.validateToken(token);
         }
-        UserDAO newUser = new UserDAO();
-        newUser.setUserID(userDTO.getUserID());
-        newUser.setEncryptedPW(passwordEncoder.encode(userDTO.getUserPW()));
-        newUser.setUserName(userDTO.getUserName());
-        newUser.setUserEmail(userDTO.getUserEmail());
-        newUser.setUserRole(userDTO.getUserRole());
-        newUser.setUserDetail(userDTO.getUserDetail());
-        userRepository.save(newUser);
-        return true;
+        return false;
     }
 
     @Override
     public String refreshToken(String token) {
-        String userID = tokenStore.get(token);
-        if (userID != null) {
-            tokenStore.remove(token);
-            String newToken = generateToken();
-            tokenStore.put(newToken, userID);
-            return newToken;
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+            if (jwtUtil.validateToken(token)) {
+                String userID = jwtUtil.getUserIdFromToken(token);
+                String userRole = jwtUtil.getRoleFromToken(token);
+                return jwtUtil.createToken(userID, userRole);
+            }
         }
         return null;
-    }
-
-    private String generateToken() {
-        return UUID.randomUUID().toString();
     }
 
     @Override
     public UserDTO getUserByID(String userID) {
-        Optional<UserDAO> userDAO = userRepository.findByUserID(userID);
-        if (userDAO.isPresent()) {
-            return convertToDTO(userDAO.get());
-        }
-        return null;
+        UserEntity user = userRepository.findByUserID(userID)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return convertToDTO(user);
     }
 
     @Override
@@ -102,15 +107,14 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
-    private UserDTO convertToDTO(UserDAO userDAO) {
-        UserDTO userDTO = new UserDTO();
-        userDTO.setUserID(userDAO.getUserID());
-        userDTO.setUserName(userDAO.getUserName());
-        userDTO.setUserEmail(userDAO.getUserEmail());
-        userDTO.setUserRole(userDAO.getUserRole());
-        userDTO.setUserDetail(userDAO.getUserDetail());
-        // Note: We don't set the password in DTO for security reasons
-        return userDTO;
+    private UserDTO convertToDTO(UserEntity user) {
+        return UserDTO.builder()
+            .userID(user.getUserID())
+            .userName(user.getUserName())
+            .userEmail(user.getUserEmail())
+            .userRole(user.getUserRole())
+            .userDetail(user.getUserDetail())
+            .build();
     }
 
     private UserDAO updateUserDAO(UserDAO existingUser, UserDTO userDTO) {
@@ -120,9 +124,7 @@ public class UserServiceImpl implements UserService {
         existingUser.setUserDetail(userDTO.getUserDetail());
         // Note: Update password only if it's provided in the DTO
         if (userDTO.getUserPW() != null && !userDTO.getUserPW().isEmpty()) {
-            // TODO: Implement password encryption
-            existingUser.setEncryptedPW(passwordEncoder.encode(userDTO.getUserPW()));
+            user.setEncryptedPW(passwordEncoder.encode(userDTO.getUserPW()));
         }
-        return existingUser;
     }
 }

@@ -1,5 +1,7 @@
 package com.cloudclub.userservice.controller;
 
+import com.cloudclub.userservice.dto.ApiResponse;
+import com.cloudclub.userservice.dto.AuthResponseData;
 import com.cloudclub.userservice.dto.UserDTO;
 import com.cloudclub.userservice.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,17 +14,20 @@ import java.util.Map;
 @RestController
 @RequestMapping("/user")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class UserController {
 
     private final UserService userService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDTO userDTO) {
-        String token = userService.login(userDTO);
-        if (token != null) {
-            return ResponseEntity.ok().body(Map.of("Access-Token", token));
+    public ResponseEntity<ApiResponse<AuthResponseData>> login(@RequestBody UserDTO userDTO) {
+        try {
+            AuthResponseData response = userService.login(userDTO);
+            return ResponseEntity.ok(ApiResponse.success("Login successful", response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiResponse.error(e.getMessage()));
         }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @PostMapping("/logout")
@@ -34,11 +39,15 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserDTO userDTO) {
-        if (userService.register(userDTO)) {
-            return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<ApiResponse<AuthResponseData>> register(@RequestBody UserDTO userDTO) {
+        try {
+            AuthResponseData response = userService.register(userDTO);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Registration successful", response));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                .body(ApiResponse.error(e.getMessage()));
         }
-        return ResponseEntity.badRequest().build();
     }
 
     @PostMapping("/refresh")
