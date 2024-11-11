@@ -42,3 +42,19 @@ springdoc:
     path: /swagger-ui.html
     disable-swagger-default-url: true
     tags-sorter: alpha # 알파벳 정렬
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      consume: B3
+      produce: B3_MULTI
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  endpoints:
+    web:
+      exposure:
+        include:
+          refresh, health, beans, busrefresh
