@@ -4,6 +4,19 @@ server:
 spring:
   application:
     name: user-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloudclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    # url: jdbc:mysql://mysql-container:3306/cloudclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: cloudclub
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
 
 eureka:
   instance:
@@ -12,4 +25,36 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://127.0.0.1:8761/eureka
+      # defaultZone: http://discovery-service:8761/eureka
+      defaultZone: http://localhost:8761/eureka
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
+jwt:
+  secret: cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123cloudclubsecretkey123
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    tags-sorter: alpha # 알파벳 정렬
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+    propagation:
+      consume: B3
+      produce: B3_MULTI
+  zipkin:
+    tracing:
+      endpoint: "http://localhost:9411/api/v2/spans"
+  endpoints:
+    web:
+      exposure:
+        include:
+          refresh, health, beans, busrefresh
