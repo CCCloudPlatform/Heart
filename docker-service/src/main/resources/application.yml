@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: docker-service
+  datasource:
+    url: jdbc:mysql://localhost:3306/cloudclub?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: cloudclub
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
