@@ -32,6 +32,8 @@ public class OpenStackConfig {
                 .authenticate();
         } catch (AuthenticationException e) {
             throw new RuntimeException("OpenStack 인증에 실패했습니다.", e);
+        } catch (Exception e) {
+            throw new RuntimeException("OpenStack 서버 연결에 실패했습니다.", e);
         }
     }
 }
